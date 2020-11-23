@@ -62,6 +62,11 @@ badmatrix = np.array([[1, 2], [3, 4], [5, 6, 7]]) # Define a matrix. Note the th
 print(badmatrix * 2) # It is supposed to scale the whole matrix
                     #[list([1, 2, 1, 2]) list([3, 4, 3, 4]) list([5, 6, 7, 5, 6, 7])]
 
+#''''''''''''''''''''''''''''''''''''''''''''''''reshape''''''''''''''''''''''''''''''''''''''''''''''''''
+x2 = np.array([2, 2]).reshape(1, -1) #x2 is [[2 2]]
+#-1: numpy allow us to give one of new shape parameter as -1 (eg: (2,-1) or (-1,3) but not (-1, -1)). 
+#It simply means that it is an unknown dimension and we want numpy to figure it out. 
+
 #''''''''''''''''''''''''''''''''''''''''''''''''Transpose''''''''''''''''''''''''''''''''''''''''''''''''''
 
 #However, note that the transpose operation does not affect 1D arrays.
@@ -87,6 +92,7 @@ nparray2 = np.array([[1, 1], [2, 2], [3, 3]]) # Define a 3 x 2 matrix.
 
 normByCols = np.linalg.norm(nparray2, axis=0) # Get the norm for each column. Returns 2 elements
 normByRows = np.linalg.norm(nparray2, axis=1) # get the norm for each row. Returns 3 elements
+FrobeniusNorm = np.linalg.norm(nparray2)  #Get Frobenius norm, return 1 number
 
 print(normByCols) #[3.74165739 3.74165739]
 print(normByRows) #[1.41421356 2.82842712 4.24264069]
@@ -114,5 +120,18 @@ for a, b in zip(nparray1, nparray2):
     flavor4 += a * b
     
 print(flavor4)  #38
+
+
+#'''''''''''''''''''''''''''''''''''''''''''''''Squeeze'''''''''''''''''''''''''''''''''''''''''''''''''
+#make to single-dimensional entries from the shape of an array.
+
+x = np.array([[[0], [1], [2]]])
+x.shape
+#(1, 3, 1)
+
+np.squeeze(x).shape
+#(3,)
+
+print(np.squeeze(x)) #array([0, 1, 2])
 
 ```
