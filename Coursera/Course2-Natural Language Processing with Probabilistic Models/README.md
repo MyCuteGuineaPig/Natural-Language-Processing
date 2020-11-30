@@ -13,12 +13,10 @@ from nltk.tokenize import word_tokenize
 
 corpus = 'Who ❤️ "word embeddings" in 2020? I do!!!'
 data = re.sub(r'[,!?;-]+', '.', corpus) # replace all interrupting punctuation signs — such as commas and exclamation marks — with periods.
-
 # data: Who ❤️ "word embeddings" in 2020. I do.
 
 data = nltk.word_tokenize(data)
 # data : ['Who', '❤️', '``', 'word', 'embeddings', "''", 'in', '2020', '.', 'I', 'do', '.']
-
 
 # Filter tokenized corpus using list comprehension
 data = [ ch.lower() for ch in data
@@ -27,7 +25,6 @@ data = [ ch.lower() for ch in data
          or emoji.get_emoji_regexp().search(ch)
        ]
 #After cleaning:  ['who', '❤️', 'word', 'embeddings', 'in', '.', 'i', 'do', '.']
-
 
 #-----------------------------------------------Generate One Hot Vector for Center/Conext-----------------------------------------------------
 
@@ -46,23 +43,17 @@ word_to_one_hot_vector('happy', word2Ind, V)
 context_words = ['i', 'am', 'because', 'i']
 context_words_vectors = [word_to_one_hot_vector(w, word2Ind, V) for w in context_words]
 #[array([0., 0., 0., 1., 0.]),
-
 # array([1., 0., 0., 0., 0.]),
-
 # array([0., 1., 0., 0., 0.]),
-
 # array([0., 0., 0., 1., 0.])]
 
 context_words_vectors = np.mean(context_words_vectors, axis=0)
 # array([0.25, 0.25, 0.  , 0.5 , 0.  ])
 
-
-
 #-----------------------------------------------Build training set-----------------------------------------------------
 
 def get_windows(words, C):
     #C, is the context half-size. Recall that for a given center word, the context words are made of C words to the left and C words to the right of the center word.
-
     i = C
     while i < len(words) - C:
         center_word = words[i]
@@ -99,13 +90,9 @@ def relu(z):
 
 z = np.array([[-1], [ 4], [ 2], [ 1], [-3]])
 #  array([[0],
-
 #       [4],
-
 #       [2],
-
 #       [1],
-
 #       [0.]])
 
 
@@ -116,6 +103,5 @@ def softmax(z):
     return e_z / sum_e_z
 
 softmax([9, 8, 11, 10, 8.5]) #or
-
 softmax([[9], [8], [1], [10], [8.5]])
 ```
