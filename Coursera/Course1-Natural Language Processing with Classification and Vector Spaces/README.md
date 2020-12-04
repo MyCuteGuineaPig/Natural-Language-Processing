@@ -6,7 +6,8 @@ import nltk                                # Python library for NLP
 from nltk.corpus import stopwords          # module for stop words that come with NLTK
 from nltk.stem import PorterStemmer        # module for stemming
 from nltk.tokenize import TweetTokenizer   # module for tokenizing strings
-
+import re
+import string
 
 # instantiate tokenizer class
 tokenizer = TweetTokenizer(preserve_case=False, strip_handles=True,
@@ -32,7 +33,49 @@ stem_word = stemmer.stem(word)  # stemming word
 # 2. Tokenize the string
 # 3. Remove stop words and punctuations
 # 4. Stemming
-from utils import process_tweet # Import the process_tweet function
+def process_tweet(tweet):
+    '''
+    Input:
+        tweet: a string containing a tweet
+    Output:
+        tweets_clean: a list of words containing the processed tweet
+    '''
+    stemmer = PorterStemmer()
+    stopwords_english = stopwords.words('english')
+    """
+    Stop words: 
+    ['i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves', 'you', "you're", "you've", "you'll", "you'd", 'your', 'yours', 'yourself', 'yourselves', 'he', 'him', 'his', 'himself', 'she', "she's", 'her', 'hers', 'herself', 'it', "it's", 'its', 'itself', 'they', 'them', 'their', 'theirs', 'themselves', 'what', 'which', 'who', 'whom', 'this', 'that', "that'll", 'these', 'those', 'am', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'having', 'do', 'does', 'did', 'doing', 'a', 'an', 'the', 'and', 'but', 'if', 'or', 'because', 'as', 'until', 'while', 'of', 'at', 'by', 'for', 'with', 'about', 'against', 'between', 'into', 'through', 'during', 'before', 'after', 'above', 'below', 'to', 'from', 'up', 'down', 'in', 'out', 'on', 'off', 'over', 'under', 'again', 'further', 'then', 'once', 'here', 'there', 'when', 'where', 'why', 'how', 'all', 'any', 'both', 'each', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 's', 't', 'can', 'will', 'just', 'don', "don't", 'should', "should've", 'now', 'd', 'll', 'm', 'o', 're', 've', 'y', 'ain', 'aren', "aren't", 'couldn', "couldn't", 'didn', "didn't", 'doesn', "doesn't", 'hadn', "hadn't", 'hasn', "hasn't", 'haven', "haven't", 'isn', "isn't", 'ma', 'mightn', "mightn't", 'mustn', "mustn't", 'needn', "needn't", 'shan', "shan't", 'shouldn', "shouldn't", 'wasn', "wasn't", 'weren', "weren't", 'won', "won't", 'wouldn', "wouldn't"]
+
+    """
+
+
+    # remove stock market tickers like $GE
+    tweet = re.sub(r'\$\w*', '', tweet)
+    # remove old style retweet text "RT"
+    tweet = re.sub(r'^RT[\s]+', '', tweet)
+    # remove hyperlinks, hyperlinks 一般出现在twitter最后
+    tweet = re.sub(r'https?:\/\/.*[\r\n]*', '', tweet)
+    # remove hashtags
+    # only removing the hash # sign from the word
+    tweet = re.sub(r'#', '', tweet)
+    # tokenize tweets
+    tokenizer = TweetTokenizer(preserve_case=False, strip_handles=True,
+                               reduce_len=True)
+                                #preserve_case=False：所有变小写, strip_handles=True，去掉@...
+                                #reduce_len = False, waaaaayyyy -> waaaaayyyy, 
+                                #reduce_len = True, waaaaayyyy -> waaayyy, 
+
+    tweet_tokens = tokenizer.tokenize(tweet)
+
+    tweets_clean = []
+    for word in tweet_tokens:
+        if (word not in stopwords_english and  # remove stopwords
+            word not in string.punctuation):  # remove punctuation, '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~'
+            # tweets_clean.append(word)
+            stem_word = stemmer.stem(word)  # stemming word
+            tweets_clean.append(stem_word)
+
+    return tweets_clean
 
 tweets_stem = process_tweet(tweet); # Preprocess a given tweet
 
@@ -134,4 +177,119 @@ np.squeeze(x).shape
 
 print(np.squeeze(x)) #array([0, 1, 2])
 
+#'''''''''''''''''''''''''''''''''''''''''''''''Keep_dims'''''''''''''''''''''''''''''''''''''''''''''''''
+print_matrix(transition_matrix)
+"""
+        NN     RB     TO
+NN  1624.1  243.1  525.6
+RB    35.8  226.3   85.5
+TO    73.4   20.0    0.2
+"""
+# Compute sum of row for each row
+rows_sum = transition_matrix.sum(axis=1, keepdims=True)
+# 3 by 1 matrix
+#array([[2392.8],
+#       [ 347.6],
+#       [  93.6]])
+
+# Without, keepdims=True, will be (3,) vector
+
+
+#'''''''''''''''''''''''''''''''''''''''''''''''Cosine Similarity'''''''''''''''''''''''''''''''''''''''''''''''''
+def cosine_similarity(A, B):
+    '''
+    Input:
+        A: a numpy array which corresponds to a word vector
+        B: A numpy array which corresponds to a word vector
+    Output:
+        cos: numerical number representing the cosine similarity between A and B.
+    '''
+    dot = np.dot(A,B)
+    norma = np.linalg.norm(A)
+    normb = np.linalg.norm(B)
+    cos = dot/(norma*normb)
+    return cos
+
+#'''''''''''''''''''''''''''''''''''''''''''''''Euclidean distance'''''''''''''''''''''''''''''''''''''''''''''''''
+def euclidean(A, B):
+    """
+    Input:
+        A: a numpy array which corresponds to a word vector
+        B: A numpy array which corresponds to a word vector
+    Output:
+        d: numerical number representing the Euclidean distance between A and B.
+    """
+    d = np.linalg.norm(A-B)
+    return d
+
+
+#'''''''''''''''''''''''''''''''''''''''''''''''PCA'''''''''''''''''''''''''''''''''''''''''''''''''
+# Method 1: 
+from sklearn.decomposition import PCA      # PCA library
+
+x = x - np.mean(x) # Center x. Remove its mean, numpy array
+y = y - np.mean(y) # Center y. Remove its mean, numpy array
+data = pd.DataFrame({'x': x, 'y': y}) # Create a data frame with x and y
+
+pca = PCA(n_components=2) # Instantiate a PCA. Choose to get 2 output variables, 
+                          #n_components : number of components to keep
+pcaTr = pca.fit(data)
+
+rotatedData = pcaTr.transform(data) # Transform the data base on the rotation matrix of pcaTr
+# # Create a data frame with the new variables. We call these new variables PC1 and PC2
+dataPCA = pd.DataFrame(data = rotatedData, columns = ['PC1', 'PC2']) 
+
+pcaTr.components_ #'Eigenvectors or principal component: 
+pcaTr.explained_variance_ #Eigenvalues or explained variance
+
+
+#Method 2:
+
+def compute_pca(X, n_components=2):
+    """
+    Input:
+        X: of dimension (m,n) where each row corresponds to a word vector
+        n_components: Number of components you want to keep.
+    Output:
+        X_reduced: data transformed in 2 dims/columns + regenerated original data
+
+    Note: np.linalg.eigh guarantees you that the eigenvalues are sorted and uses a faster algorithm that takes advantage of the fact 
+        that the matrix is symmetric. If you know that your matrix is symmetric, use this function.
+    Attention, eigh doesn't check if your matrix is indeed symmetric, it by default just takes the lower triangular part of the matrix 
+    and assumes that the upper triangular part is defined by the symmetry of the matrix.
+    """
+
+    ### START CODE HERE (REPLACE INSTANCES OF 'None' with your code) ###
+    # mean center the data
+    X_demeaned = X - np.mean(X, axis=0)
+
+    # calculate the covariance matrix
+    covariance_matrix = np.cov(X_demeaned, rowvar=False)
+    #If rowvar = True, then each row represents a variable, with observations in the columns. 
+    #   Otherwise, ach column represents a variable, while the rows contain observations.
+
+    # calculate eigenvectors & eigenvalues of the covariance matrix
+    eigen_vals, eigen_vecs = np.linalg.eigh(covariance_matrix)
+    
+    # sort eigenvalue in increasing order (get the indices from the sort)
+    idx_sorted = np.argsort(eigen_vals)
+    
+    # reverse the order so that it's from highest to lowest.
+    idx_sorted_decreasing = idx_sorted[::-1]
+
+    # sort the eigen values by idx_sorted_decreasing
+    eigen_vals_sorted = eigen_vals[idx_sorted_decreasing]
+
+    # sort eigenvectors using the idx_sorted_decreasing indices
+    eigen_vecs_sorted = eigen_vecs[:,idx_sorted_decreasing]
+
+    # select the first n eigenvectors (n is desired dimension
+    # of rescaled data array, or dims_rescaled_data)
+    eigen_vecs_subset = eigen_vecs_sorted[:,:n_components]
+
+    # transform the data by multiplying the transpose of the eigenvectors 
+    # with the transpose of the de-meaned data
+    # Then take the transpose of that product.
+    X_reduced = np.dot(X_demeaned,eigen_vecs_subset)
+    return X_reduced
 ```
