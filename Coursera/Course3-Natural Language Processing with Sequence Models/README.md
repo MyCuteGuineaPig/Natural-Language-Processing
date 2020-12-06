@@ -89,7 +89,8 @@ y = norm(x)
 print("y :", y) # y : [-1.3416404  -0.44721344  0.44721344  1.3416404 ]
 
 #----------------------------------------------- Custom Layers -----------------------------------------------------
-#This is where things start getting more interesting! You can create your own custom layers too and define custom functions for computations by using tl.Fn.
+#This is where things start getting more interesting! 
+# You can create your own custom layers too and define custom functions for computations by using tl.Fn.
 help(tl.Fn)
 #Fn(name, f, n_out=1) Returns a layer with no weights that applies the function `f`.
 # e.g.         `Fn('SumAndMax', lambda x0, x1: (x0 + x1, jnp.maximum(x0, x1)), n_out=2)`
@@ -117,7 +118,8 @@ y = times_two(x) # y : [2 4 6]
 print("y :", y)
 
 #----------------------------------------------- Combinators -----------------------------------------------------
-# combine layers to build more complex layers. Trax provides a set of objects named combinator layers to make this happen. Combinators are themselves layers, so behavior commutes.
+# combine layers to build more complex layers. Trax provides a set of objects named combinator layers to make this happen.
+#  Combinators are themselves layers, so behavior commutes.
  help(tl.Serial)
  help(tl.Parallel)
 
@@ -151,7 +153,8 @@ print("name :", serial.name) # name : Serial
 print("sublayers :", serial.sublayers) #  sublayers : [LayerNorm, Relu, TimesTwo]
 print("expected inputs :", serial.n_in) # expected inputs : 1
 print("promised outputs :", serial.n_out) # promised outputs : 1
-print("weights & biases:", serial.weights, "\n")  # weights & biases: [(DeviceArray([1, 1, 1, 1, 1], dtype=int32), DeviceArray([0, 0, 0, 0, 0], dtype=int32)), (), ()] 
+print("weights & biases:", serial.weights, "\n")  
+# weights & biases: [(DeviceArray([1, 1, 1, 1, 1], dtype=int32), DeviceArray([0, 0, 0, 0, 0], dtype=int32)), (), ()] 
 
 # Inputs
 y = serial(x)
@@ -202,7 +205,8 @@ print("weights & biases:", serial.weights, "\n") # weights & biases: [()]
 
 
 #----------------------------------------------- JAX -----------------------------------------------------
-# Note:There are certain things which are still not possible in fastmath.numpy which can be done in numpy, so you sometimes switch between them to get our work done.
+# Note:There are certain things which are still not possible in fastmath.numpy which can be done in numpy, 
+# so you sometimes switch between them to get our work done.
 x_numpy = np.array([1, 2, 3])
 print("good old numpy : ", type(x_numpy), "\n") #good old numpy :  <class 'numpy.ndarray'> 
 
@@ -218,7 +222,10 @@ help(trax.supervised.training.TrainTask)
 # evaluate a model, Trax defines trax.supervised.training.EvalTask which packages the eval data and metrics (among other things) into another object.
 help(trax.supervised.training.EvalTask)
 
-#The final piece tying things together is the trax.supervised.training.Loop abstraction that is a very simple and flexible way to put everything together and train the model, all the while evaluating it and saving checkpoints. Using Loop will save you a lot of code compared to always writing the training loop by hand. More importantly, you are less likely to have a bug in that code that would ruin your training.
+#The final piece tying things together is the trax.supervised.training.Loop abstraction that is a very simple 
+# and flexible way to put everything together and train the model, all the while evaluating it and saving checkpoints. 
+# Using Loop will save you a lot of code compared to always writing the training loop by hand.
+#  More importantly, you are less likely to have a bug in that code that would ruin your training.
 help(trax.supervised.training.Loop)
 
 help(trax.optimizers) #include adam, momentum, rms_prop
@@ -236,7 +243,8 @@ inputs, targets, example_weights = np.array([[2005, 4451, 3201,    9,    0,    0
                                    np.array([1, 1, 0, 0]), np.array([1,1,1,1])
 train_generator = inputs, targets, example_weights 
 
-#This defines a model trained using tl.CrossEntropyLoss optimized with the trax.optimizers.Adam optimizer, all the while tracking the accuracy using tl.Accuracy metric. We also track tl.CrossEntropyLoss on the validation set.
+#This defines a model trained using tl.CrossEntropyLoss optimized with the trax.optimizers.Adam optimizer, 
+# all the while tracking the accuracy using tl.Accuracy metric. We also track tl.CrossEntropyLoss on the validation set.
 train_task = training.TrainTask(
     labeled_data=train_generator,
     loss_layer=tl.CrossEntropyLoss(),
