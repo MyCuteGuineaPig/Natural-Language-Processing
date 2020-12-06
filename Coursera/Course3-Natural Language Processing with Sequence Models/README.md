@@ -312,3 +312,148 @@ tmp_is_positive_int = tmp_is_positive.astype(np.int32)  # DeviceArray([1, 1], dt
 tmp_is_positive_float = tmp_is_positive.astype(np.float32) # DeviceArray([1., 1.], dtype=float32)
 ```
 
+## GRU MODEL
+
+   - [```ShiftRight```](https://trax-ml.readthedocs.io/en/latest/trax.layers.html#trax.layers.attention.ShiftRight) Shifts the tensor to the right by padding on axis 1. The `mode` should be specified and it refers to the context in which the model is being used. Possible values are: 'train', 'eval' or 'predict', predict mode is for fast inference. Defaults to "train". axis = 1 dimension应该是 size of vocabulary
+   - [```Embedding```](https://trax-ml.readthedocs.io/en/latest/trax.layers.html#trax.layers.core.Embedding) Maps discrete tokens to vectors. It will have shape ```(vocabulary length X dimension of output vectors)```. The dimension of output vectors (also called ```d_feature```) is the number of elements in the word embedding.
+   - [```GRU```](https://trax-ml.readthedocs.io/en/latest/trax.layers.html#trax.layers.rnn.GRU) The GRU layer. It leverages another Trax layer called [`GRUCell`](https://trax-ml.readthedocs.io/en/latest/trax.layers.html#trax.layers.rnn.GRUCell). The number of GRU units should be specified and should match the number of elements in the word embedding. If you want to stack two consecutive GRU layers, it can be done by using python's list comprehension.
+   - [```Dense```](https://trax-ml.readthedocs.io/en/latest/trax.layers.html#trax.layers.core.Dense) Vanilla Dense layer.
+   - [```LogSoftMax```](https://trax-ml.readthedocs.io/en/latest/trax.layers.html#trax.layers.core.LogSoftmax) Log Softmax function.
+
+```python
+mode = 'train'
+vocab_size = 256
+model_dimension = 512
+n_layers = 2
+
+GRU = tl.Serial(
+      tl.ShiftRight(mode=mode), # Do remember to pass the mode parameter if you are using it for interence/test as default is train 
+      tl.Embedding(vocab_size=vocab_size, d_feature=model_dimension),
+      [tl.GRU(n_units=model_dimension) for _ in range(n_layers)], # You can play around n_layers if you want to stack more GRU layers together
+      tl.Dense(n_units=vocab_size),
+      tl.LogSoftmax()
+    )
+def show_layers(model, layer_prefix="Serial.sublayers"):
+    print(f"Total layers: {len(model.sublayers)}\n")
+    for i in range(len(model.sublayers)):
+        print('========')
+        print(f'{layer_prefix}_{i}: {model.sublayers[i]}\n')
+        
+show_layers(GRU)
+"""
+Total layers: 6
+
+========
+Serial.sublayers_0: ShiftRight(1)
+
+========
+Serial.sublayers_1: Embedding_256_512
+
+========
+Serial.sublayers_2: GRU_512
+
+========
+Serial.sublayers_3: GRU_512
+
+========
+Serial.sublayers_4: Dense_256
+
+========
+Serial.sublayers_5: LogSoftmax
+"""
+```
+
+
+## Numpy
+
+```Python
+#----------------------------------------------- concatenate / hstack -----------------------------------------------------
+
+w_hh = np.full((3, 2), 1)  # illustration purposes only, returns an array of size 3x2 filled with all 1s
+w_hx = np.full((3, 3), 9)  # illustration purposes only, returns an array of size 3x3 filled with all 9s
+"""
+w_hh :
+[[1 1]
+ [1 1]
+ [1 1]]
+w_hx :
+[[9 9 9]
+ [9 9 9]
+ [9 9 9]]
+ """
+
+w_h1 = np.concatenate((w_hh, w_hx), axis=1)  #每行末尾添加
+"""
+w_h :
+[[1 1 9 9 9]
+ [1 1 9 9 9]
+ [1 1 9 9 9]]
+"""
+
+w_h2 = np.hstack((w_hh, w_hx))
+"""
+w_h :
+[[1 1 9 9 9]
+ [1 1 9 9 9]
+ [1 1 9 9 9]]
+"""
+
+h_t_prev = np.full((2, 1), 1)  # illustration purposes only, returns an array of size 2x1 filled with all 1s
+x_t = np.full((3, 1), 9)       # illustration purposes only, returns an array of size 3x1 filled with all 9s
+"""
+h_t_prev :
+[[1]
+ [1]]
+
+x_t :
+[[9]
+ [9]
+ [9]]
+"""
+
+ax_1 = np.concatenate(
+    (h_t_prev, x_t), axis=0
+)  # note the difference in axis parameter vs earlier
+
+# Option 2: vstack
+ax_2 = np.vstack((h_t_prev, x_t))
+"""
+ax_1 :
+[[1]
+ [1]
+ [9]
+ [9]
+ [9]]
+
+option 2 : vstack
+ax_2 :
+[[1]
+ [1]
+ [9]
+ [9]
+ [9]]
+"""
+```
+
+
+## trax.fastmath.numpy
+
+- With regular numpy you get ```numpy.ndarray``` but with Trax's numpy you will get ```jax.interpreters.xla.DeviceArray```. These two types map to each other. So if you find some error logs mentioning DeviceArray type, don't worry about it, treat it like you would treat an ndarray and march ahead.
+- You can get a randomized numpy array by using the `numpy.random.random()` function. This is one of the functionalities that Trax's numpy does not currently support in the same way as the regular numpy. 
+
+```Python
+import numpy
+import trax
+import trax.fastmath.numpy as np
+
+#----------------------------------------------- random -----------------------------------------------------
+numpy_array = numpy.random.random((5,10))
+trax_numpy_array = np.array(numpy_array)
+
+#----------------------------------------------- trax.layers.one_hot(). -----------------------------------------------------
+# trax's one_hot function takes the input as one_hot(x, n_categories, dtype=optional)
+targets.shape # (32, 64)
+reshaped_targets = tl.one_hot(targets, 256) 
+# shape is (32, 64, 256)
+
+```
