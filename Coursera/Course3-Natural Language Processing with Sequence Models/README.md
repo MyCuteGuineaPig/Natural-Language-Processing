@@ -320,6 +320,43 @@ tmp_is_positive_float = tmp_is_positive.astype(np.float32) # DeviceArray([1., 1.
    - [```Dense```](https://trax-ml.readthedocs.io/en/latest/trax.layers.html#trax.layers.core.Dense) Vanilla Dense layer.
    - [```LogSoftMax```](https://trax-ml.readthedocs.io/en/latest/trax.layers.html#trax.layers.core.LogSoftmax) Log Softmax function.
 
+用**ShiftRight** 原因:
+
+the use of shift right layer
+I had the same doubt. So, just to make sure I understand the role of this layer, I'll try to explain it as clearly as possible.
+
+First, consider why data_generator yields two copies of the batch. If you think about it, you'll see that the lines of text contain both the inputs and the targets. As an example, imagine the line is "12345678901". For max_length = 10, the data generator should return this line as the following tensor:
+
+[49, 50, 51, 52, 53, 54, 55, 56, 57, 1].
+
+However, unlike you may think, this tensor is not the input corresponding to this line. The above tensor is the target!
+
+Before I justify the last statement, let me tell you what the tl.ShiftRight layer does to this tensor. Preserving the length, tl.ShiftRight shifts the tensor to the right, and adds zero padding on the left. In our example, this layer returns
+
+[0, 49, 50, 51, 52, 53, 54, 55, 56, 57].
+
+0 is the Unicode integer associated with the so-called "null character". When this character is sent to a printer or a terminal, nothing happens. In this case, I believe the null character can be seen as representing the start-of-sentence token <--s-->. So there's no problem with the zero padding.
+
+Back to our example: recall that the line is
+
+String: "12345678901",
+
+Padded tensor (from data_generator, max_length = 10): y = [49, 50, 51, 52, 53, 54, 55, 56, 57, 1].
+
+This data can be used to generate the input and the target for this line as follows:
+
+Input: x = tl.ShiftRight(n_shifts=1)(y) = [0, 49, 50, 51, 52, 53, 54, 55, 56, 57].
+
+Target: y.
+
+After all, the goal of the model is to use a sequence of characters to predict a new character. And what I'm saying is that the line "12345678901" gives us
+
+the input sequence x [<--s-->, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+
+and the target sequence y [1, 2, 3, 4, 5, 6, 7, 8, 9, <--EOS-->].
+
+For our goal, this is useful, since the target contains the last tokens of the input plus a new token. This is why we need the tl.ShiftRight layer. I guess the confusion has to do with the fact that the inputs yielded by the generator aren't the actual inputs (from a conceptual perspective). So there's a little preprocessing that was pushed down to the definition of the model
+
 ```python
 mode = 'train'
 vocab_size = 256
@@ -361,6 +398,26 @@ Serial.sublayers_4: Dense_256
 ========
 Serial.sublayers_5: LogSoftmax
 """
+
+#----------------------------------------------- Perplexity-----------------------------------------------------
+"""
+最后一个shape 是256,因为在assignment中, convert character to cell using ord(c), so it is cap by 256. 
+prediction 就是log probability for previous N words
+需要non_pad 原因是 可能因为pad, prediction是0, target 也是0，就会被视为正确，应该剔除这些在计算当中
+"""
+predictions = numpy.load('predictions.npy')
+targets = numpy.load('targets.npy')
+
+print(f'predictions has shape: {predictions.shape}')  #(32, 64, 256)
+print(f'targets has shape: {targets.shape}') # (32, 64)
+
+total_log_ppx = np.sum(preds*tl.one_hot(target, preds.shape[-1]) , axis= -1) # HINT: tl.one_hot() should replace one of the Nones
+print("last shape", preds.shape[-1]) #256
+print("last total_log_ppx", preds.shape[-1]) # (32, 64)
+non_pad = 1.0 - np.equal(target, 0)          # You should check if the target equals 0
+ppx = total_log_ppx * non_pad                             # Get rid of the padding
+
+log_ppx = - np.sum(ppx) / np.sum(non_pad) #log perplexity
 ```
 
 
@@ -457,3 +514,5 @@ reshaped_targets = tl.one_hot(targets, 256)
 # shape is (32, 64, 256)
 
 ```
+
+
